@@ -5,7 +5,7 @@ public class DatabaseManager {
     private String dbUser = "root";
     private String dbPassword = "";
 
-    public void addAnimal(String id, String name,String Class, String family, String species ,String origin, String status,String endangerment, int age){
+    public boolean addAnimal(String id, String name,String Class, String family, String species ,String origin, String status,String endangerment, int age){
         String insertQuery = "INSERT INTO animal(id, name, Class, family, species, origin, status, endangerment, age)VALUES(?,?,?,?,?,?,?,?,?)";
 
         try(Connection conn = DriverManager.getConnection(url, dbUser, dbPassword)){
@@ -20,6 +20,8 @@ public class DatabaseManager {
                 pst.setString(8, endangerment);
                 pst.setInt(9,0);
 
+                int rowsAffected = pst.executeUpdate();
+                return rowsAffected > 0;
         }catch(SQLException e){
             if (e.getErrorCode() == 1062) {
                 System.out.println("Username already exists.");
@@ -27,9 +29,42 @@ public class DatabaseManager {
                 e.printStackTrace();
             }
         }
+        return false;
     }
-        public void searchAnimal(String id){
-            String searchQuery = "SELECT "
+
+        public boolean searchAnimal(String id){
+        String searchQuery = "SELECT * FROM animal WHERE  id = ?";
+        try(Connection conn =DriverManager.getConnection(url,dbUser, dbPassword);
+            PreparedStatement pst =conn.prepareStatement(searchQuery)){
+                pst.setString(1, id);
+                
+                try(ResultSet rs = pst.executeQuery()){
+                    return rs.next();
+                }
+            }catch(SQLException e ){
+                e.printStackTrace();
+                return false;
+            }
         }
 
+    public boolean treatmentStatus(String id, String status){
+        String updateQuery = "UPDATE animal SET status = ? WHERE id = ?";
+    
+        try(Connection conn =DriverManager.getConnection(url,dbUser, dbPassword);
+            PreparedStatement pst =conn.prepareStatement(updateQuery)){
+                pst.setString(1, status);
+                pst.setString(2, id);
+                
+                int rowsAffected = pst.executeUpdate();
+                return rowsAffected > 0;
+        }catch(SQLException e){
+            if (e.getErrorCode() == 1062) {
+                System.out.println("Invoice already paid");
+            }else{
+                e.printStackTrace();
+            }
+            return false;
+        }
+    }
 }
+
